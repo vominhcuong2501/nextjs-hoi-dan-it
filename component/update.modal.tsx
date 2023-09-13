@@ -1,17 +1,22 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import { toast } from 'react-toastify';
 import { mutate } from 'swr';
+
 interface IProps {
-	isShowModal: boolean;
-	setIsShowModal: (value: boolean) => void;
+	isShowUpdate: boolean;
+	setIsShowUpdate: (value: boolean) => void;
+	blog: IBlogs | null;
+	setBlog: (value: IBlogs | null) => void;
 }
 
-function CreateModal(props: IProps) {
-	const { isShowModal, setIsShowModal } = props;
+function UpdateModal(props: IProps) {
+	const { isShowUpdate, setIsShowUpdate, blog, setBlog } = props;
+
+	const [id, setId] = useState<number>(0);
 
 	const [title, setTitle] = useState<string>('');
 
@@ -19,14 +24,23 @@ function CreateModal(props: IProps) {
 
 	const [content, setContent] = useState<string>('');
 
+	useEffect(() => {
+		if (blog && blog.id) {
+			setId(blog.id);
+			setTitle(blog.title);
+			setContent(blog.content);
+			setAuthor(blog.author);
+		}
+	}, [blog]);
+
 	const handleSubmit = () => {
 		if (!title || !author || !content) {
 			toast.error('Please Enter All Field!!!');
 			return;
 		}
 
-		fetch('http://localhost:8000/blogs', {
-			method: 'POST',
+		fetch(`http://localhost:8000/blogs/${id}`, {
+			method: 'PUT',
 			headers: {
 				Accept: 'application/json, text/plain, */*',
 				'Content-Type': 'application/json',
@@ -36,9 +50,9 @@ function CreateModal(props: IProps) {
 			.then((res) => res.json())
 			.then((res) => {
 				if (res) {
-					toast.success('Create new blog succeed !!!');
+					toast.success('Update blog succeed !!!');
 					handleCloseModal();
-					mutate('http://localhost:8000/blogs');
+					mutate(`http://localhost:8000/blogs`);
 				}
 			});
 	};
@@ -47,12 +61,13 @@ function CreateModal(props: IProps) {
 		setTitle('');
 		setAuthor('');
 		setContent('');
-		setIsShowModal(false);
+		setBlog(null);
+		setIsShowUpdate(false);
 	};
 
 	return (
 		<>
-			<Modal show={isShowModal} onHide={handleCloseModal} backdrop="static" keyboard={false}>
+			<Modal show={isShowUpdate} onHide={handleCloseModal} backdrop="static" keyboard={false}>
 				<Modal.Header closeButton>
 					<Modal.Title>Add new a blog</Modal.Title>
 				</Modal.Header>
@@ -94,4 +109,4 @@ function CreateModal(props: IProps) {
 	);
 }
 
-export default CreateModal;
+export default UpdateModal;
